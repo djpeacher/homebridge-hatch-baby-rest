@@ -51,6 +51,13 @@ export class RestIot extends IotDevice<RestIotState> implements BaseDevice {
     distinctUntilChanged(),
   )
 
+  // The `srId` of the routine the device is currently playing (0 when nothing
+  // is playing). Used to round-trip the active Favorite back to HomeKit.
+  onRoutineSrId = this.onState.pipe(
+    map((state) => state.current.srId),
+    distinctUntilChanged(),
+  )
+
   onFirmwareVersion = this.onState.pipe(map((state) => state.deviceInfo.f))
 
   private setCurrent(
@@ -68,9 +75,12 @@ export class RestIot extends IotDevice<RestIotState> implements BaseDevice {
     })
   }
 
-  async turnOnRoutine() {
-    const routines = await this.fetchRoutines()
-    this.setCurrent('routine', 1, routines[0].id)
+  async turnOnRoutine(srId?: number) {
+    if (srId === undefined) {
+      const routines = await this.fetchRoutines()
+      srId = routines[0].id
+    }
+    this.setCurrent('routine', 1, srId)
   }
 
   turnOff() {
